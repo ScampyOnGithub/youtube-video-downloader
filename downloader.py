@@ -3,13 +3,17 @@ from pytubefix.cli import on_progress
 import os
 import ffmpeg  # from ffmpeg-python
 import re
+import tkinter as tk
 
 # Set paths
-SAVE_PATH = "C:/Users/scamp/Videos/Youtube/"
+SAVE_PATH = "C:/Users/USER/Videos/Youtube/"
 TEMP_VIDEO_FILE = os.path.join(SAVE_PATH, "temp.mp4")
 TEMP_AUDIO_FILE = os.path.join(SAVE_PATH, "temp.m4a")
 FILE_EXTENSION = ".mp4"
 PREFERRED_RESOLUTION = "1080"
+
+# Ensure save directory exists
+os.makedirs(SAVE_PATH, exist_ok=True)
 
 # ANSI color codes
 RED = "\033[1;31m"
@@ -18,15 +22,11 @@ GREEN = "\033[1;32m"
 CYAN = "\033[1;36m"
 OFF = "\033[0;0m"
 
-# Ensure save directory exists
-os.makedirs(SAVE_PATH, exist_ok=True)
-
-def sanitize_filename(s):
+def sanitize_filename(s) -> str:
     # Remove or replace invalid Windows filename characters
     return re.sub(r'[<>:"/\\|?*]', '', s)
 
-
-def find_best_resolution(yt):
+def find_best_resolution(yt) -> str:
     preferred_video_itag = ""
     best_resolution = 0
 
@@ -45,12 +45,16 @@ def find_best_resolution(yt):
                 continue
     return preferred_video_itag
 
-queue = [
-    "https://www.youtube.com/watch?v=wto2oyfD2iY",
-    # "https://www.youtube.com/watch?v=va-YHeytvFQ&t=99s",
-]
+def on_entry_change(*args):
+    content = entryVar.get()
+    if len(content) >= 43:
+        try:
+            previewLabel.config(text=f"Preview: {YouTube(content, on_progress_callback=on_progress).title} by {YouTube(content, on_progress_callback=on_progress).author}")
+        except:
+            print("uh oh")
 
-for url in queue:
+def download_video() -> None:
+    url = urlEntry.get().strip()
     print(url)
 
     try:
@@ -101,3 +105,27 @@ for url in queue:
 
     except Exception as e:
         print(RED + f"Unexpected error: {e}" + OFF)
+
+root = tk.Tk()
+root.title("Youtube Video Downloader")
+root.geometry("500x150")
+
+frame1 = tk.Frame(root)
+frame1.pack(expand=True, padx=10, pady=10)
+
+label1 = tk.Label(frame1, text="Enter a YouTube video URL:")
+label1.grid(row=0, column=0, sticky="w", padx=0, pady=0)
+
+entryVar = tk.StringVar()
+entryVar.trace_add("write", on_entry_change)
+
+urlEntry = tk.Entry(frame1, textvariable=entryVar, width=50)
+urlEntry.grid(row=1, column=0, sticky="w", padx=0, pady=0)
+
+buttonDownload = tk.Button(frame1, text="Download Video", command=download_video)
+buttonDownload.grid(row=1, column=1, sticky="w", padx=0, pady=0)
+
+previewLabel = tk.Label(frame1, text="")
+previewLabel.grid(row=2,column=0, sticky="w", padx=0, pady=0)
+
+root.mainloop()
